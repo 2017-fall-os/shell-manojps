@@ -3,9 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
-#include <sys/types.h>
 #include "mytoc.h"
-#include "myshell.h"
 
 #define BUFF_SIZE 1000
 //#define die(e) do { fprintf(stderr, "%s\n", e); exit(EXIT_FAILURE); } while (0);
