@@ -3,80 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include "mytoc.h"
 
 #define BUFF_SIZE 1000
-//#define die(e) do { fprintf(stderr, "%s\n", e); exit(EXIT_FAILURE); } while (0);
 
-int exitcmp(char *userCmd) {
-  char *ecode = "exit";
-  int i;
-  int result = 0;
-  i = 0;
-
-  //printf("%s\n", userCmd);
-
-    while(ecode[i] == userCmd[i] && result == 0 )
-    {
-        if(ecode[i] == '\0' || userCmd[i] == '\0'){
-            result = 1;
-        }
-        i++;
-    }
-
-
-    return result;
-}
-
-char ** tokenize(char *userCmd1) {
-  char * token1;
-  char * ParaArray[100];
-  //char ** ParaArray;
-  int ParaIndex  = 0;
-
-  char ** param;
-
-  token1 = strtok(userCmd1, " \t\n");
-  ParaArray[ParaIndex] = token1;
-  ParaIndex++;
-  while(token1 != NULL)
-    {
-      token1 = strtok(NULL, " \t\n");
-      ParaArray[ParaIndex] = token1;
-      ParaIndex++;
-    }
-  ParaArray[ParaIndex]=NULL;
-  //printf("%s\n", ParaArray[0]);
-
-  param = ParaArray;
-
-  return param;
-}
-
-char ** tokenize2(char *userCmd2) {
-  char * token2;
-  char * ParaArray2[100];
-  //char ** ParaArray;
-  int ParaIndex2  = 0;
-
-  char ** param2;
-
-  token2 = strtok(userCmd2, ":");
-  ParaArray2[ParaIndex2] = token2;
-  ParaIndex2++;
-  while(token2 != NULL)
-    {
-      token2 = strtok(NULL, ":");
-      ParaArray2[ParaIndex2] = token2;
-      ParaIndex2++;
-    }
-  ParaArray2[ParaIndex2]=NULL;
-  //printf("%s\n", ParaArray[0]);
-
-  param2 = ParaArray2;
-
-  return param2;
-}
 
 int childProcess (char ** paramlist, char* envp[]){
     char *const envParms[2] = {"STEPLIB=SASC.V6.LINKLIB", NULL};
@@ -108,78 +39,86 @@ int childProcess (char ** paramlist, char* envp[]){
 
 
 int main(int argc, char **argv, char* envp[]) {
-  int pipes[2];
+  //int pipes[2];
   char buf[4096];
   char ** token;
   char ** tokenp;
   char ** tokenpath;
   char *userCmd = (char *)malloc(sizeof(char) * BUFF_SIZE);
-  char * env;
+  char * env, *com_path;
+  char full_path[100];
+  char * user_command;
+  int i,j, env_token_num;
 
-  pipe(pipes);
 
-  printf("%s\n", getenv("PATH"));
-  printf("%s\n", getenv("HOME"));
+  struct stat file_stat;
+
+  env = getenv("PATH");
+  //printf("%s\n", env);
+
+  //pipe(pipes);
+
+  //printf("%s\n", getenv("PATH"));
+  //printf("%s\n", getenv("HOME"));
   char cwd[1024];
-  if (getcwd(cwd, sizeof(cwd)) != NULL) printf("%s\n", cwd);
+  //if (getcwd(cwd, sizeof(cwd)) != NULL) printf("%s\n", cwd);
 
-  tokenpath = tokenize2(getenv("PATH"));
-  printf("%s\n", tokenpath[2]);
+  token_num = token_count(env, ':');
+  env_token_num = token_num;
+  //printf("Token num %d\n", token_num);
+  tokenpath = mytoc(env, ':');
+  //for (i=0; i<token_num; i++) printf("argv[%d] = %s\n", i, tokenpath[i]);
+  //printf("%s\n", tokenpath[2]);
 
+  while (1) {
+    int com_found = 0;
 
-  printf("$");
-  fgets(userCmd, BUFF_SIZE+1, stdin);
-  token = tokenize(userCmd);
-  //tokenp = token;
+    user_command = user_prompt();
+    //printf("%s\n", user_command);
+    token_num = token_count(user_command, ' ');
+    //printf("%d\n", token_num);
+    token = mytoc(user_command, ' ');
+    //printf("MAIN\n");
+    //for (i=0; i<token_num; i++) printf("argv[%d] = %s\n", i, token[i]);
+    if (exit_command(user_command)) return 0;
+    //if (exit_command(token[0])) return 0;
 
-  //printf("%s\n", token[0]);
-  while (exitcmp(token[0]) != 1) {
-    //childProcess(token, envp);
-    printf("%s\n", token[0]);
-    if (token){
-      int status;
+    if (token_num>0) {
+      for (j=0; j<env_token_num; j++) {
+        //full_path = tokenpath[j];
+        strcpy(full_path,tokenpath[j]);
+        strcat(full_path,"/"); // Using C library function
+        strcat(full_path,token[0]);
+        //printf("%s\n", full_path);
 
-      //printf("hello world (pid:%d)\n", (int) getpid());
-      pid_t pid = fork();
-      if (pid < 0) {
-        // Failed to fork
-        write(STDERR_FILENO, "Failed to fork.\n", 16);
-        exit(EXIT_FAILURE);
-      } else if (pid == 0) {
-        // Child process
-        dup2 (pipes[1], STDOUT_FILENO);
-        close(pipes[0]);
-        close(pipes[1]);
-        execve(token[0], token, envp);
-        //int nbytes = read(link[0], foo, sizeof(foo));
-        //printf("Output: (%.*s)\n", nbytes, foo);
-        //write(STDERR_FILENO, "command not found\n", 18);
-        exit(EXIT_FAILURE);
-      } else {
-        // Parent process
-
-        int status;
-        wait(&status);
-
-        if (WIFEXITED(status) && WEXITSTATUS(status) < 0) {
-          fprintf(stderr, "program terminated with exit code: %d\n", WEXITSTATUS(status));
+        if(stat(full_path,&file_stat) >= 0) {
+          com_found = 1;
+          strcpy(com_path, full_path);
+          //printf("%s\n", com_path);
+          //printf("%s\n", full_path);
         }
-        close(pipes[1]);
-        int nbytes = read(pipes[0], buf, sizeof(buf));
-        printf("Output: (%.*s)\n", nbytes, buf);
-
 
       }
+
+      if (com_found == 0) write(1, "command not found.\n",20);
+      else {
+        //printf("%s\n", com_path);
+        pid_t pid;
+        pid = fork();
+        if (pid == 0) {
+          execve(com_path, token, envp);
+          exit(0);
+        } else {
+          int status;
+          waitpid(pid, &status, 0);
+        }
+      }
+
     }
+    //free(full_path);
+    //free(tokenpath);
+    free(token);
+  }
 
-
-    printf("$");
-    fgets(userCmd, BUFF_SIZE+1, stdin);
-    token = tokenize(userCmd);
-    //childProcess(token);
-    //printf("%s\n", token[0]);
-    //int arraysize = sizeof(token)/sizeof(token[0]);
-    //printf("%s\n", token[1]);
-}
-
+  return 0;
 }
