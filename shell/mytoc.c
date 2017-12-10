@@ -1,61 +1,46 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <string.h>
 #include "mytoc.h"
 
-#define BUFFER 2000
+#define BUFFER 2000 /* Defines user input buffer to be 2000 bytes */
 
-// global variables
-int token_num = 0;
+/* global variables */
+int token_num = 0; /* Initialize token number */
 
-// user input prompt
+
+/* This is the user prompt. It reads the input from stdin, copies the string to
+   string, and returns a pointer to the copied string. */
+
 char * user_prompt(){
-  //struct user_input ui;
-  char *user_command0;
-  char *user_command1;
+
+  char user_command0[BUFFER]; /* Array for user input */
+  char *user_command1; /* Pointer to copied string */
   int n = 1;
-  int i;
+  int i, j=0;
 
-  user_command0 = (char *) malloc(sizeof(user_command0));
-
+  /* Reads user input */
   if (n==1) {
     write(1, "$\n", 1);
     n = read(0, user_command0, BUFFER);
   }
 
-  //ui.user_command[ui.n-1] = ' ';
-  //ui.user_command[ui.n] = '\0';
-
-  //printf("%d\n", ui.n);
-  user_command1 = (char *)malloc(n-1);
-  //char *pstr = str;
-
+  /* Copy user input into a string */
+  user_command1 = (char *)malloc(n);
   for(int i = 0; i < n-1; i++){
     user_command1[i] = user_command0[i];
-    //printf("%d\n", i);
   }
-  //printf("End %d\n", i);
   user_command1[n-1] = '\0';
-
-/*
-  for(int i = 0; i < n; i++){
-    printf("%02x", user_command1[i]);
-  }
-  printf("\n");
-*/
+  
   return user_command1;
 }
 
-// count number of tokens
+/* token_count() counts the number of tokens. */
 int token_count(char *user_in, char delimiter){
   int token_num = 0;
   int token_flag = 0;
   int i = 0;
-
   int j = 0;
-
-  //printf("%s\n", user_in);
 
   while(user_in[i] != '\0')
   {
@@ -70,55 +55,54 @@ int token_count(char *user_in, char delimiter){
 
     if (token_flag == 1) j++;
     else j=0;
-    //printf("char: %c\t token no: %d\t flag: %d\t%d\n", user_in[i], token_num, token_flag, j);
     i++;
   }
 
-  //printf("%d\n", token_num);
   return token_num;
 }
 
-// tokenizer function
+/* mytoc() function tokenizes the input string. The input arguments are the po-
+   inter to the input string and the delimiter character. The mytoc() function
+   returns a pointer to the  token vector. */
 char ** mytoc (char *user_str, char delimiter) {
-//void token_store (int token_num, char *user_str, char delimiter) {
-  //char **token_vec = NULL;
 
-  char **token_vec = (char **)calloc(token_num, sizeof(char *)*token_num);
-  //token_vec = (char **)calloc(token_num, sizeof(char *)*token_num);
-  int token_index = 0;
-  int i = 0;
-  int j= 0;
-  int m;
-  int token_flag = 0;
-  int token_len = 0;
-  int tl[token_num];
+  char **token_vec = (char **)calloc(token_num, sizeof(char *)*token_num); /* Memory allocation for token vector */
+  int token_index = 0; /* Initialize token index (current token number) */
+  int i = 0; /* Temporary loop control variable */
+  int j= 0; /* Temporary loop control variable */
+  int m; /* Temporary variable */
+  int token_flag = 0; /* Initialize temporary variable token_flag */
+  int token_len = 0; /* Initialize temporary variabel token_len */
+  int tl[token_num]; /* Temporary array for stroing  tokens */
   int start_index;
 
+  /* Initialize temporary token vector */
   for (m = 0; m < token_num; m++)
   {
   tl[m] = 0;
-  //printf("%d\t%d\n", m, tl[m]);
   }
 
-
+  /* Traverse the input string until the end */
   while(user_str[i] != '\0')
   {
+    /* Extra security in case user input has newline character in the end of
+       the string. */
     if (user_str[i] == '\n') break;
 
+    /* Set token_flag and increment token_index when new token starts. Reset
+       token_flag when token ends. */
     if (user_str[i] != delimiter && token_flag != 1) {
       token_index++;
       token_flag = 1;
       start_index = i;
-      //printf("Start index %d\n", start_index);
     } else if (user_str[i] == delimiter && token_flag == 1) {
       token_flag = 0;
     }
 
+    /* Determine token length for each token. */
     if (token_flag == 1) {
       token_len++;
-    }
-    else {
-      //printf("%d\n", j);
+    } else {
       if (tl[token_index-1] == 0) {
         tl[token_index-1] = token_len;
       }
@@ -126,56 +110,46 @@ char ** mytoc (char *user_str, char delimiter) {
       if (token_index > 0 && token_flag== 0) {
         token_vec[token_index-1] = (char*) malloc(tl[token_index-1]);
         for (j = 0; j<tl[token_index-1]; j++) {
-          //token_vec[token_index-1][j] = user_str[i-tl[token_index-1]+j];
           token_vec[token_index-1][j] = user_str[start_index+j];
         }
         token_vec[token_index-1][j++] = '\0';
       }
-      //printf("%d\n", tl[token_index-1]);
-      //printf("%s\n", );
       token_len=0;
     }
-    //printf("char: %c\t token no: %d\t flag: %d\t%d\n", user_str[i], token_index, token_flag, j);
     i++;
   }
 
-  //printf("%d\t%d\n", j, token_index);
+  /* Gets the correct token at the end of user input if it ends with a null
+     terminator. */
   if (user_str[i-1] != delimiter) tl[token_index-1] = token_len;
 
-  //for (k=0; k<token_num; k++) printf("%d\t%d\n", k, tl[k]);
-
+  /* Write the tokens to the token vector. */
   if (user_str[i] == '\0' || user_str[i] == '\n') {
     token_vec[token_index-1] = (char*) malloc(tl[token_index-1]);
     for (j = 0; j<tl[token_index-1]; j++) {
-      //token_vec[token_index-1][j] = user_str[i-tl[token_index-1]+j];
       token_vec[token_index-1][j] = user_str[start_index+j];
     }
     token_vec[token_index-1][j++] = '\0';
   }
-
-  token_vec[token_index] = NULL;
+  token_vec[token_index] = NULL; /* Ends the token vector with a null. */
 
   return token_vec;
 }
 
-// program exit
+/* Checks "exit" command in user input. If the "exit" command is found, then it
+   terminates the tokenizer. */
 int exit_command(char *user_cmd) {
-  char *exit_code = "exit";
-  int i=0;
+  char *exit_code = "exit\0";
+  int i=0, j=0;
   int result = 0;
-
-  //printf("EXIT FUNC\n");
-
-
+  
   while(exit_code[i] == user_cmd[i] && result == 0 )
   {
-      //printf("%02x\t%02x\n", exit_code[i], user_cmd[i]);
       if(exit_code[i] == '\0' || user_cmd[i] == '\0'){
           result = 1;
       }
       i++;
   }
-  printf("\n");
 
   return result;
 }
