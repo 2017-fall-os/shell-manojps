@@ -85,7 +85,8 @@ int main(int argc, char **argv, char* envp[]) {
     int com_found = 0;
     user_command = user_prompt();
     token_num = token_count(user_command, ' ');
-    token = mytoc(user_command, ' ');
+    if (token_num >0)
+        token = mytoc(user_command, ' ');
     //for (i=0; i<token_num; i++) printf("argv[%d] = %s\n", i, token[i]);
     if (exit_command(user_command)) return 0;
     
@@ -132,15 +133,17 @@ int main(int argc, char **argv, char* envp[]) {
         }
         
       }
+    free(token);
+    free(full_path);
 
     }
     //free(full_path);
     //free(tokenpath);
-    free(token);
+
   }
   
   free(tokenpath);
-  free(full_path);
+  
   
 
   return 0;
