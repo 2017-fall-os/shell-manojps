@@ -63,7 +63,8 @@ int main(int argc, char **argv, char* envp[]) {
   int i,j, env_token_num;
 
 
-  struct stat *file_stat;
+  //struct stat *file_stat;
+  struct stat file_stat;
 
   env = getenv("PATH");
   //printf("%s\n", env);
@@ -78,43 +79,35 @@ int main(int argc, char **argv, char* envp[]) {
   token_num = token_count(env, ':');
   env_token_num = token_num;
   tokenpath = mytoc(env, ':');
-  //for (i=0; i<token_num; i++) printf("argv[%d] = %s\n", i, tokenpath[i]);
-  //printf("%s\n", tokenpath[2]);
 
   while (1) {
     int com_found = 0;
     user_command = user_prompt();
     token_num = token_count(user_command, ' ');
-    if (token_num >0)
+    if (token_num >0) {
         token = mytoc(user_command, ' ');
-    //for (i=0; i<token_num; i++) printf("argv[%d] = %s\n", i, token[i]);
-    if (exit_command(user_command)) return 0;
+    //if (exit_command(user_command))
+        if (exit_command(token[0]))
+            return 0;
+    }
     
     if (token_num>0) {
       for (j=0; j<env_token_num; j++) {
-        //full_path = tokenpath[j];
-        //strcpy(full_path,tokenpath[j]);
         full_path = strcopy(tokenpath[j]);
         strcat(full_path,"/"); // Using C library function
         strcat(full_path,token[0]);
-        //printf("%s\n", full_path);
-        file_stat = malloc(sizeof(struct stat));
-        //int exist = stat(full_path,&file_stat);
-        //fprintf(stdout, "File exist: %d\n", exist);
+        //file_stat = malloc(sizeof(struct stat));
+
         
-        //if(stat(full_path,&file_stat) == 0) {
-        if(stat(full_path,file_stat) == 0) {
+        if(stat(full_path,&file_stat) == 0) {
+        //if(stat(full_path,file_stat) == 0) {
           com_found = 1;
-          ///strcpy(com_path, full_path);
           com_path = strcopy(full_path);
-          write(1, "Verified command exist. After strcpy\n", 38);
-          //printf("%s\n", com_path);l
-          //printf("%s\n", full_path);
-          free(file_stat);
+          //free(file_stat);
           break;
         }
         
-        free(file_stat);
+        //free(file_stat);
 
       }
 
@@ -137,14 +130,9 @@ int main(int argc, char **argv, char* envp[]) {
     free(full_path);
 
     }
-    //free(full_path);
-    //free(tokenpath);
 
   }
   
   free(tokenpath);
-  
-  
-
   return 0;
 }

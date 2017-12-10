@@ -12,7 +12,7 @@ int token_num = 0; /* Initialize token number */
 /* This is the user prompt. It reads the input from stdin, copies the string to
    string, and returns a pointer to the copied string. */
 
-char * user_prompt(){
+char *user_prompt(){
 
   char user_command0[BUFFER]; /* Array for user input */
   char *user_command1; /* Pointer to copied string */
