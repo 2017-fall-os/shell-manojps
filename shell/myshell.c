@@ -62,8 +62,6 @@ int main(int argc, char **argv, char* envp[]) {
   char *user_command;
   int i,j, env_token_num;
 
-
-  //struct stat *file_stat;
   struct stat file_stat;
 
   env = getenv("PATH");
@@ -95,18 +93,13 @@ int main(int argc, char **argv, char* envp[]) {
             full_path = strcopy(tokenpath[j]);
             strcat(full_path,"/"); // Using C library function
             strcat(full_path,token[0]);
-            //file_stat = malloc(sizeof(struct stat));
 
         
         if(stat(full_path,&file_stat) == 0) {
-        //if(stat(full_path,file_stat) == 0) {
           com_found = 1;
           com_path = strcopy(full_path);
-          //free(file_stat);
           break;
         }
-        
-        //free(file_stat);
 
       }
 
