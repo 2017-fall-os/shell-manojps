@@ -84,19 +84,18 @@ int main(int argc, char **argv, char* envp[]) {
     int com_found = 0;
     user_command = user_prompt();
     token_num = token_count(user_command, ' ');
-    if (token_num >0) {
-        token = mytoc(user_command, ' ');
-    //if (exit_command(user_command))
-        if (exit_command(token[0]))
-            return 0;
-    }
     
     if (token_num>0) {
-      for (j=0; j<env_token_num; j++) {
-        full_path = strcopy(tokenpath[j]);
-        strcat(full_path,"/"); // Using C library function
-        strcat(full_path,token[0]);
-        //file_stat = malloc(sizeof(struct stat));
+        
+        token = mytoc(user_command, ' ');
+        if (exit_command(token[0]))
+            return 0;
+        
+        for (j=0; j<env_token_num; j++) {
+            full_path = strcopy(tokenpath[j]);
+            strcat(full_path,"/"); // Using C library function
+            strcat(full_path,token[0]);
+            //file_stat = malloc(sizeof(struct stat));
 
         
         if(stat(full_path,&file_stat) == 0) {
@@ -126,13 +125,12 @@ int main(int argc, char **argv, char* envp[]) {
         }
         
       }
-    free(token);
-    free(full_path);
-
+    *token = 0;
+    *full_path = 0;
     }
-
   }
   
-  free(tokenpath);
+  *tokenpath = 0;
+  
   return 0;
 }
